@@ -1,0 +1,303 @@
+#!/usr/bin/env php
+<?php
+
+require realpath(__DIR__ . '/../../../autoload.php');
+
+use Cattlog\Adapters\CattlogZendAdapter as Cattlog;
+use Cattlog\Output;
+use Cattlog\FileSystem;
+
+define('PROJECT_DIR', getcwd());
+define('TEMPLATE_DIR', realpath(__DIR__ . '/../files/templates/'));
+define('CONFIG_FILE', PROJECT_DIR . '/cattlog.json');
+
+// get config if exists
+$config = file_exists(CONFIG_FILE) ? json_decode(file_get_contents(CONFIG_FILE), true) : array();
+
+try {
+
+    // ensure json isn't NULL, perhaps syntax error
+    if (file_exists(CONFIG_FILE) and is_null($config))
+        throw new Exception('Config file data not set, or invalid JSON"');
+
+    $fileSystem = new FileSystem($config);
+    $cattlog = new Cattlog($fileSystem, $config);
+
+    switch(@$argv[1]) {
+        case 'init':
+
+            // copy a default file from the repo to the PROJECT_DIR
+            $srcFile = realpath(__DIR__ . '/../files/cattlog.json');
+
+            if (file_exists(CONFIG_FILE)) {
+                echo Output::warning('File ./cattlog.json already exists.') . PHP_EOL;
+            } else {
+                copy($srcFile, CONFIG_FILE);
+                echo Output::success('Created ./cattlog.json config file.') . PHP_EOL;
+            }
+            break;
+
+        case 'list': // will list keys from stored
+
+            // check config file is not missing
+            if (!file_exists(CONFIG_FILE))
+                throw new Exception('Config file missing - run "cattlog init"');
+
+            // get $lang from paramaters
+            if (! $lang = @$argv[2])
+                throw new Exception('Language parameter missing - cattlog list <lang>');
+
+            // get $lang from paramaters
+            if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
+                throw new Exception('"' . $lang . '" is not in your valid_languages configuration.');
+
+            // $keysFromDest = $cattlog->getKeysFromDestFiles($lang);
+            $data = $cattlog->getKeysWithValuesFromDestFiles($lang);
+
+            $emptyKeys = array_filter($data, function ($value) {
+                return empty($value);
+            });
+            $nonEmptyKeys = array_filter($data, function ($value) {
+                return !empty($value);
+            });
+
+            require TEMPLATE_DIR . '/list.php';
+
+            break;
+
+        case 'scan': // report which keys have been added, removed .. no update
+
+            // check config file is not missing
+            if (!file_exists(CONFIG_FILE))
+                throw new Exception('Config file missing - run "cattlog init"');
+
+            // get language parameter
+            if (! $lang = @$argv[2])
+                throw new Exception('Language parameter missing - cattlog scan <lang>');
+
+            // get $lang from paramaters
+            if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
+                throw new Exception('"' . $lang . '" is not in your valid_languages configuration.');
+
+            // don't filter files that don't exist, we want to show those too
+            $destFiles = $fileSystem->getDestFiles($lang);
+
+            $keysFromDest = $cattlog->getKeysFromDestFiles($lang);
+            $keysFromSrc = $cattlog->getKeysFromSrcFiles();
+
+            $keysToAdd = $cattlog->getDiffAddedKeys($keysFromDest, $keysFromSrc);
+            $keysToRemove = $cattlog->getDiffRemovedKeys($keysFromDest, $keysFromSrc);
+
+            require TEMPLATE_DIR . '/scan.php';
+
+            break;
+
+        case 'count':
+
+            // get $lang from paramaters
+            if (! $lang = @$argv[2])
+                throw new Exception('Language parameter missing - cattlog count <lang>');
+
+            // get $lang from paramaters
+            if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
+                throw new Exception('"' . $lang . '" is not in your valid_languages configuration.');
+
+            $data = $cattlog->getKeysWithValuesFromDestFiles($lang);
+
+            echo Output::success(count($data)) . PHP_EOL;
+
+            break;
+
+        case 'get_value':
+
+            // get $lang from paramaters
+            if (! $lang = @$argv[2])
+                throw new Exception('Language parameter missing - cattlog get_value <lang> <key>');
+
+            // get $lang from paramaters
+            if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
+                throw new Exception('"' . $lang . '" is not in your valid_languages configuration.');
+
+            // get $key from paramaters
+            if (! $key = @$argv[3])
+                throw new Exception('key pair missing - cattlog get_value <lang> <key>');
+
+            // from the original key (e.g. messages.hello), get the file and key (hello)
+            list($file, $key) = $fileSystem->getDestArrayByKey($lang, $key);
+
+            // attempt to get data from file
+            if ($data = $fileSystem->getFileData($file)) {
+
+                if ($cattlog->hasKey($data, $key)) {
+                    $value = $cattlog->getValue($data, $key);
+                    echo Output::success(json_encode($value)) . PHP_EOL;
+                } else {
+                    throw new Exception('Could not find key "' . $key . '"');
+                }
+
+            } else {
+                throw new Exception('Could not retrieve data from "' . $file . '".');
+            }
+
+            break;
+
+        case 'set_value':
+
+            // get $lang from paramaters
+            if (! $lang = @$argv[2])
+                throw new Exception('Language parameter missing - cattlog get_value <lang> <key>="<value>"');
+
+            // get $lang from paramaters
+            if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
+                throw new Exception('"' . $lang . '" is not in your valid_languages configuration.');
+
+            // we need the key=value
+            if (! isset($argv[3]))
+                throw new Exception('key/value pair missing - cattlog get_value <lang> <key>="<value>"');
+            elseif (! preg_match('/(.*)=(.*)/', $argv[3], $pairSplit))
+                throw new Exception('key/value pair incorrect format - cattlog get_value <lang> <key>="<value>"');
+
+            $key = $pairSplit[1];
+            $newValue = $pairSplit[2];
+
+            list($file, $key) = $fileSystem->getDestArrayByKey($lang, $key);
+
+            // attempt to get data from file
+            if ($data = $fileSystem->getFileData($file)) {
+
+                if ($cattlog->hasKey($data, $key)) {
+                    $cattlog->setValue($data, $key, $newValue, array(
+                        'create' => false, // don't create a new key, if none exists
+                        'overwrite' => true,
+                    ));
+
+                    // write to file
+                    $fileSystem->writeDataToFile($file, $data);
+
+                    echo Output::success($newValue) . PHP_EOL;
+                } else {
+                    throw new Exception('Could not find key "' . $key . '"');
+                }
+            } else {
+                throw new Exception('Could not retrieve data from "' . $file . '".');
+            }
+
+            break;
+
+        case 'update':
+
+            // when adding new items, even if something seems removed, attempt to
+            // add it
+
+            // get $lang from paramaters
+            if (! $lang = @$argv[2])
+                throw new Exception('Language parameter missing - cattlog update <lang>');
+
+            // get $lang from paramaters
+            if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
+                throw new Exception('"' . $lang . '" is not in your valid_languages configuration.');
+
+            // don't filter files that don't exist, we want to show those too
+            $destFiles = $fileSystem->getDestFiles($lang);
+
+            $keysFromDest = $cattlog->getKeysFromDestFiles($lang);
+            $keysFromSrc = $cattlog->getKeysFromSrcFiles();
+
+            $keysToAdd = $cattlog->getDiffAddedKeys($keysFromDest, $keysFromSrc);
+            $keysToRemove = $cattlog->getDiffRemovedKeys($keysFromDest, $keysFromSrc);
+
+            require TEMPLATE_DIR . '/scan.php';
+
+
+            // confirm proceed
+            if (empty($keysToAdd) and empty($keysToRemove)) {
+                echo 'Nothing to update.' . PHP_EOL;
+                break;
+            }
+
+
+            // confirm proceed
+            if (strtolower(readline('Sync files? (y/N) ')) != 'y') {
+                echo Output::error('Operation aborted.') . PHP_EOL;
+                break;
+            } else {
+                echo PHP_EOL; // keep it tidy
+            }
+
+
+
+            // add keys
+            if (count($keysToAdd)) {
+
+                echo 'Adding to files:' . PHP_EOL;
+
+                // loop through each key
+                foreach ($keysToAdd as $key) {
+
+                    list($file, $innerKey) = $fileSystem->getDestArrayByKey($lang, $key);
+
+                    if ($file) {
+
+                        // if a physical file doesn't yet exist, then set as
+                        // an empty array. we'll create a new file
+                        $data = $fileSystem->getFileData($file);
+
+                        // add these keys to data
+                        $data = $cattlog->add($data, $innerKey);
+
+                        // write to file
+                        $fileSystem->writeDataToFile($file, $data);
+
+                        echo '  ' . Output::success($file) . PHP_EOL;
+                    } else {
+                        // key exists, but file not in config
+                        echo '  ' . Output::warning('No file matches key "' . $key . '"') . PHP_EOL;
+                    }
+                }
+            }
+
+
+            // remove keys
+            if (count($keysToRemove)) {
+
+                echo 'Removing keys from files:' . PHP_EOL;
+
+                // loop through each key
+                foreach ($keysToRemove as $key) {
+
+                    list($file, $innerKey) = $fileSystem->getDestArrayByKey($lang, $key);
+
+                    if ($file) {
+
+                        // if a physical file doesn't yet exist, then set as
+                        // an empty array. we'll create a new file
+                        $data = $fileSystem->getFileData($file);
+
+                        // remove these keys from data
+                        $data = $cattlog->remove($data, $innerKey);
+
+                        // write to file
+                        $fileSystem->writeDataToFile($file, $data);
+
+                        echo '  ' . Output::success($file) . PHP_EOL;
+                    } else {
+                        // key exists, but file not in config
+                        echo '  ' . Output::warning('No file matches key "' . $key . '"') . PHP_EOL;
+                    }
+                }
+            }
+
+            break;
+
+        case null: // no command passed, show help
+
+            require TEMPLATE_DIR . '/help.php';
+
+            break;
+
+        default: // no recognised, display error proceeded by help (null)
+            throw new Exception('Command not recognised');
+    }
+} catch (Exception $e) {
+    echo Output::error('Error: ' . $e->getMessage()) . PHP_EOL;
+}
