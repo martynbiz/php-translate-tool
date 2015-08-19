@@ -1,7 +1,7 @@
 {
-    "name": "martynbiz/cattlog-l5",
+    "name": "martynbiz/cattlog-zend",
     "type": "library",
-    "description": "A CLI tool for Laravel 5 to manage translation files and syncing entries with view files. Allows translations to be synced with views, get/set values, and list empty values.",
+    "description": "A CLI tool for Zend Framework 1 to manage translation files and syncing entries with view files. Allows translations to be synced with views, get/set values, and list empty values.",
     "keywords": ["translations", "multi-language", "multilanguage", "languages"],
     "homepage": "http://github.com/martynbiz/cattlog",
     "license": "MIT",
@@ -21,7 +21,6 @@
     },
     "require-dev": {
         "phpunit/phpunit": "4.3.*",
-        "laravel/framework": "5.0.*"
     },
     "bin": [
         "bin/cattlog"
