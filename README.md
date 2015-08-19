@@ -61,7 +61,11 @@ Passing no parameters will list all options
 
 ## TODO ##
 
-* Break up: cattlog-l5, cattlog-zend
 * convert the pattern to a more human readable string eg. "trans(:key)", "Lang::get(:key)"
 
+* in zend, how to handle plurals e.g "COMMENT_TXT": ["%1$s Comment","%1$s Comments"]. maybe attempt to json_decode(), if null, treat as a string
+
 * in laravel we need to validate key has enough parts (file.name), breaks zend though
+
+converter
+https://localise.biz/free/converter/po-to-php

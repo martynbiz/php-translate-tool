@@ -61,7 +61,7 @@ class CattlogZendAdapterTest extends BaseAdapterTest
 
     public function testAdd()
     {
-        $data = array(
+        $actual = array(
             'TEST_1' => 'test 1',
             'TEST_2' => 'test 2',
             'TEST_3' => 'test 3',
@@ -81,14 +81,14 @@ class CattlogZendAdapterTest extends BaseAdapterTest
             'TEST_7' => '',
         );
 
-        $actual = $this->adapter->add($data, $keysToAdd);
+        $this->adapter->add($actual, $keysToAdd);
 
         $this->assertEquals($expected, $actual);
     }
 
     public function testRemove()
     {
-        $data = array(
+        $actual = array(
             'TEST_1' => 'test 1',
             'TEST_2' => 'test 2',
             'TEST_3' => 'test 3',
@@ -109,7 +109,7 @@ class CattlogZendAdapterTest extends BaseAdapterTest
             'TEST_6' => 'test 6',
         );;
 
-        $actual = $this->adapter->remove($data, $keysToRemove);
+        $this->adapter->remove($actual, $keysToRemove);
 
         $this->assertEquals($expected, $actual);
     }
@@ -197,38 +197,5 @@ class CattlogZendAdapterTest extends BaseAdapterTest
         $this->adapter->setValue($actual, 'TEST_6', 'new 6', $options); // no set
 
         $this->assertEquals($expected, $actual);
-    }
-
-    public function testGetKeysWithValuesFromDestFiles()
-    {
-        $this->fsMock
-            ->method('getDestFiles')
-            ->willReturn( array(
-                '/path/to/lang/en/messages.php',
-            ) );
-
-        $this->fsMock
-            ->method('getFileData')
-            ->willReturn( array(
-                'hello' => 'Hello world!',
-            ) );
-
-        $this->fsMock
-            ->method('fileExists')
-            ->willReturn( true );
-
-        $expected = array(
-            'hello' => 'Hello world!',
-        );
-
-        $actual = $this->adapter->getKeysWithValuesFromDestFiles('en');
-
-        $this->assertEquals($expected, $actual);
-
-        // test getKeysFromDestFiles too since we've setup our mock
-
-        $actualKeys = $this->adapter->getKeysFromDestFiles('en');
-
-        $this->assertEquals(array_keys($expected), $actualKeys);
     }
 }

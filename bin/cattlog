@@ -122,11 +122,11 @@ try {
             if (! $key = @$argv[3])
                 throw new Exception('key pair missing - cattlog get_value <lang> <key>');
 
-            // from the original key (e.g. messages.hello), get the file and key (hello)
-            list($file, $key) = $fileSystem->getDestArrayByKey($lang, $key);
+            // get the dest file
+            $destFile = $fileSystem->getDestFile($lang);
 
             // attempt to get data from file
-            if ($data = $fileSystem->getFileData($file)) {
+            if ($data = $fileSystem->getFileData($destFile)) {
 
                 if ($cattlog->hasKey($data, $key)) {
                     $value = $cattlog->getValue($data, $key);
@@ -136,7 +136,7 @@ try {
                 }
 
             } else {
-                throw new Exception('Could not retrieve data from "' . $file . '".');
+                throw new Exception('Could not retrieve data from "' . $destFile . '".');
             }
 
             break;
@@ -160,10 +160,11 @@ try {
             $key = $pairSplit[1];
             $newValue = $pairSplit[2];
 
-            list($file, $key) = $fileSystem->getDestArrayByKey($lang, $key);
+            // get the dest file
+            $destFile = $fileSystem->getDestFile($lang);
 
             // attempt to get data from file
-            if ($data = $fileSystem->getFileData($file)) {
+            if ($data = $fileSystem->getFileData($destFile)) {
 
                 if ($cattlog->hasKey($data, $key)) {
                     $cattlog->setValue($data, $key, $newValue, array(
@@ -172,14 +173,14 @@ try {
                     ));
 
                     // write to file
-                    $fileSystem->writeDataToFile($file, $data);
+                    $fileSystem->writeDataToFile($destFile, $data);
 
                     echo Output::success($newValue) . PHP_EOL;
                 } else {
                     throw new Exception('Could not find key "' . $key . '"');
                 }
             } else {
-                throw new Exception('Could not retrieve data from "' . $file . '".');
+                throw new Exception('Could not retrieve data from "' . $destFile . '".');
             }
 
             break;
@@ -197,8 +198,8 @@ try {
             if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
                 throw new Exception('"' . $lang . '" is not in your valid_languages configuration.');
 
-            // don't filter files that don't exist, we want to show those too
-            $destFiles = $fileSystem->getDestFiles($lang);
+            // get the dest file
+            $destFile = $fileSystem->getDestFile($lang);
 
             $keysFromDest = $cattlog->getKeysFromDestFiles($lang);
             $keysFromSrc = $cattlog->getKeysFromSrcFiles();
@@ -232,28 +233,29 @@ try {
                 echo 'Adding to files:' . PHP_EOL;
 
                 // loop through each key
-                foreach ($keysToAdd as $key) {
+                // foreach ($keysToAdd as $key) {
 
-                    list($file, $innerKey) = $fileSystem->getDestArrayByKey($lang, $key);
+                    // get the dest file
+                    $destFile = $fileSystem->getDestFile($lang);
 
-                    if ($file) {
+                    // if ($destFile) {
 
                         // if a physical file doesn't yet exist, then set as
                         // an empty array. we'll create a new file
-                        $data = $fileSystem->getFileData($file);
+                        $data = $fileSystem->getFileData($destFile);
 
                         // add these keys to data
-                        $data = $cattlog->add($data, $innerKey);
+                        $cattlog->add($data, $keysToAdd);
 
                         // write to file
-                        $fileSystem->writeDataToFile($file, $data);
+                        $fileSystem->writeDataToFile($destFile, $data);
 
-                        echo '  ' . Output::success($file) . PHP_EOL;
-                    } else {
-                        // key exists, but file not in config
-                        echo '  ' . Output::warning('No file matches key "' . $key . '"') . PHP_EOL;
-                    }
-                }
+                        echo '  ' . Output::success($destFile) . PHP_EOL;
+                    // } else {
+                    //     // key exists, but file not in config
+                    //     echo '  ' . Output::warning('No file matches key "' . $key . '"') . PHP_EOL;
+                    // }
+                // }
             }
 
 
@@ -263,28 +265,29 @@ try {
                 echo 'Removing keys from files:' . PHP_EOL;
 
                 // loop through each key
-                foreach ($keysToRemove as $key) {
+                // foreach ($keysToRemove as $key) {
 
-                    list($file, $innerKey) = $fileSystem->getDestArrayByKey($lang, $key);
+                    // get the dest file
+                    $destFile = $fileSystem->getDestFile($lang);
 
-                    if ($file) {
+                    // if ($destFile) {
 
                         // if a physical file doesn't yet exist, then set as
                         // an empty array. we'll create a new file
-                        $data = $fileSystem->getFileData($file);
+                        $data = $fileSystem->getFileData($destFile);
 
                         // remove these keys from data
-                        $data = $cattlog->remove($data, $innerKey);
+                        $cattlog->remove($data, $keysToRemove);
 
                         // write to file
-                        $fileSystem->writeDataToFile($file, $data);
+                        $fileSystem->writeDataToFile($destFile, $data);
 
-                        echo '  ' . Output::success($file) . PHP_EOL;
-                    } else {
-                        // key exists, but file not in config
-                        echo '  ' . Output::warning('No file matches key "' . $key . '"') . PHP_EOL;
-                    }
-                }
+                        echo '  ' . Output::success($destFile) . PHP_EOL;
+                    // } else {
+                    //     // key exists, but file not in config
+                    //     echo '  ' . Output::warning('No file matches key "' . $key . '"') . PHP_EOL;
+                    // }
+                // }
             }
 
             break;

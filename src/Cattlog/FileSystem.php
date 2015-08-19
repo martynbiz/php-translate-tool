@@ -15,7 +15,7 @@ class FileSystem
 	{
 		// set defaults
 		$config = array_merge(array(
-			'src' => array("resources/views"),
+			'src' => array('application/views'),
 			'dest' => 'resources/lang/{lang}',
 			'project_dir' => getcwd(), // useful for testing
 		), $config);
@@ -25,11 +25,7 @@ class FileSystem
 
 		// set the full path of dest
 		if (isset($config['dest'])) {
-			if (!is_array($config['dest'])) $config['dest'] = array($config['dest']);
-
-			foreach ($config['dest'] as $i => $dest) {
-				$config['dest'][$i] = $config['project_dir'] . '/' . $dest;
-			}
+			$config['dest'] = $config['project_dir'] . '/' . $config['dest'];
 		}
 
 		// set the full path of src. also, set as an array even
@@ -88,69 +84,14 @@ class FileSystem
 
 	/**
 	 * Get the config array (may be altered from array that was given in instantiation)
+	 * In Zend, we're only gonna support a single file for now
 	 * @return array Config
 	 */
-	public function getDestFiles($lang)
+	public function getDestFile($lang)
 	{
 		// set dest path by $lang e.g. /path/to/dest/{en}/
-		$destDirs = $this->config['dest'];
-
-		// replace path with $lang
-		foreach ($destDirs as $i => $dir) {
-			$destDirs[$i] = str_replace("{lang}", $lang, $dir);
-		}
-
-		// get files in dir
-		return $destDirs;
+		return str_replace("{lang}", $lang, $this->config['dest']);
 	}
-
-	/**
-	 * Will return the string paths of the destination files. Doesn't check
-	 * if file exists (without passing in some option I guess)
-	 * @return string Dest file path
-	 */
-	public function getDestFileByCollection($lang, $collection)
-	{
-		$destFiles = $this->getDestFiles($lang);
-
-		// loop until a match is found
-		$found = null;
-		foreach ($destFiles as $file) {
-			if (preg_match('/\/' . $lang . '\/' . $collection . '\.php$/', $file, $output_array)) {
-				$found = $file;
-				break;
-			}
-		}
-
-		// get files in dir
-		return $found;
-	}
-
-	/**
-	 * Will return the string path of the file
-	 * @param string $lang The language code (e.g. "en")
-	 * @param string $key The full key ("messages.hello")
-	 * @return array Array of ($file, $key) (e.g. ("/../messages.php", "hello"))
-	 */
-	public function getDestArrayByKey($lang, $key)
-	{
-		// // get the parts
-		// $keyParts = explode('.', $key);
-		// if (count($keyParts) < 2)
-		//     throw new \Exception('Key doesn\'t have enough parts eg. "file.part1"');
-
-		// from the original $key, extract the $collection and inner $key
-		$collection = array_shift($keyParts);
-		$key = implode('.' , $keyParts);
-
-		// now, from the dest files try to find one that matches this set
-		$file = $this->getDestFileByCollection($lang, $collection);
-
-		return array($file, $key);
-	}
-
-
-
 
 
 	/**

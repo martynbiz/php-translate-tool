@@ -4,13 +4,11 @@ use Cattlog\Output;
 
 ?>
 Checking...
-<?php foreach ($destFiles as $file): ?>
-<?php if ($fileSystem->fileExists($file)): ?>
-    <?php echo $file . PHP_EOL; ?>
+<?php if ($fileSystem->fileExists($destFile)): ?>
+    <?php echo $destFile . PHP_EOL; ?>
 <?php else: ?>
-    <?php echo Output::highlight($file) . PHP_EOL; ?>
+    <?php echo Output::highlight($destFile) . PHP_EOL; ?>
 <?php endif; ?>
-<?php endforeach; ?>
 
 <?php if (count($keysToAdd)): ?>
 The following new keys were found:

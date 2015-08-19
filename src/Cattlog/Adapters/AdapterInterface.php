@@ -17,7 +17,7 @@ interface AdapterInterface
 	 * @param array $keysToAdd Keys to add to data
 	 * @return array Data with keys added
 	 */
-	public function add($data, $keys);
+	public function add(&$data, $keys);
 
 	/**
 	 * Will remove an array of keys from data
@@ -25,7 +25,7 @@ interface AdapterInterface
 	 * @param string|array $keys Keys to remove from data
 	 * @return array Data with keys removed
 	 */
-	public function remove($data, $keys);
+	public function remove(&$data, $keys);
 
 	/**
 	 * This will compare the old and newly scanned keys, and
@@ -83,10 +83,4 @@ interface AdapterInterface
 	 * @return array Keys in an indexed array
 	 */
 	public function getKeysFromDestFiles($lang);
-
-	/**
-	 * Get the keys from source directories.
-	 * @return array Keys in an indexed array
-	 */
-	public function getKeysWithValuesFromDestFiles($lang);
 }

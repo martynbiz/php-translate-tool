@@ -21,8 +21,7 @@ class CattlogZendAdapter implements AdapterInterface
 		// set default config for Laravel
 		$this->config = array_merge(array(
 			'pattern' => array(
-				'/trans\\s*\\(\\s*[\\\'|\\"]([A-Za-z0-9_\\-\\.]*)[\\\'|\\"]/',
-				'/Lang::get\\s*\\(\\s*[\\\'|\\"]([A-Za-z0-9_\\-\\.]*)[\\\'|\\"]/',
+				'/xlate\\s*\\(\\s*[\\\'|\\"]([A-Za-z0-9_\\-\\.]*)[\\\'|\\"]/',
 			),
 		), $config);
 
@@ -37,7 +36,7 @@ class CattlogZendAdapter implements AdapterInterface
 	 * @param array $keysToAdd Keys to add to data
 	 * @return array Data with keys added
 	 */
-	public function add($data, $keys)
+	public function add(&$data, $keys)
 	{
 		// ensure keys is an array
 		if (! is_array($keys))
@@ -47,7 +46,7 @@ class CattlogZendAdapter implements AdapterInterface
 		$keys = array_fill_keys($keys, '');
 
 		// $data will overwrite $keys so previous values not overwritten
-		return array_merge($keys, $data);
+		$data = array_merge($keys, $data);
 	}
 
 	/**
@@ -56,13 +55,13 @@ class CattlogZendAdapter implements AdapterInterface
 	 * @param string|array $keys Keys to remove from data
 	 * @return array Data with keys removed
 	 */
-	public function remove($data, $keys)
+	public function remove(&$data, $keys)
 	{
 		// ensure keys is an array
 		if (! is_array($keys))
 			$keys = array($keys);
 
-		return array_diff_key($data, array_flip($keys));
+		$data = array_diff_key($data, array_flip($keys));
 	}
 
 	/**
@@ -124,6 +123,13 @@ class CattlogZendAdapter implements AdapterInterface
 
 		// use Laravel's array_get to check if the element exists using dot notation
 		if(array_key_exists($key, $data) or $options['create']) {
+
+			// try it as json
+			$jsonValue = json_decode($newValue);
+			if (! is_null($jsonValue)) {
+				$newValue = $jsonValue;
+			}
+
 			$data[$key] = $newValue;
 		}
 
@@ -168,24 +174,24 @@ class CattlogZendAdapter implements AdapterInterface
 		return $keys;
 	}
 
-	/**
-	 * Get the keys from source directories.
-	 * @return array Keys in an indexed array
-	 */
-	public function getKeysWithValuesFromDestFiles($lang)
-	{
-		// get files in dir
-		$files = $this->fileSystem->getDestFiles($lang);
-
-		// for each file, get the key in string format
-		$keys = array();
-		foreach ($files as $file) {
-			$data = $this->fileSystem->getFileData($file);
-			$keys = array_merge($data, $keys);
-		}
-
-		return $keys;
-	}
+	// /**
+	//  * Get the keys from source directories.
+	//  * @return array Keys in an indexed array
+	//  */
+	// public function getKeysWithValuesFromDestFiles($lang)
+	// {
+	// 	// get files in dir
+	// 	$file = $this->fileSystem->getDestFile($lang);
+	//
+	// 	// for each file, get the key in string format
+	// 	$keys = array();
+	// 	foreach ($files as $file) {
+	// 		$data = $this->fileSystem->getFileData($file);
+	// 		$keys = array_merge($data, $keys);
+	// 	}
+	//
+	// 	return $keys;
+	// }
 
 	/**
 	 * Get the keys from source directories.
@@ -194,7 +200,8 @@ class CattlogZendAdapter implements AdapterInterface
 	public function getKeysFromDestFiles($lang)
 	{
 		// get files in dir
-		$data = $this->getKeysWithValuesFromDestFiles($lang);
+		$file = $this->fileSystem->getDestFile($lang);
+		$data = $this->fileSystem->getFileData($file);
 
 		return array_keys($data);
 	}
