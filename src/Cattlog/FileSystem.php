@@ -2,9 +2,75 @@
 
 //https://github.com/lijinma/php-cli-color
 
+/*
+
+New class structure:
+
+$apapter = new Json(); // getFileData, putFileData
+
+// this class is only here to allow us to mock file_exists etc
+$fileSystem = new FileSystem();
+
+// cattlog
+$cattlog = new Cattlog($adapter, $fileSystem, $config);
+
+*/
+
 class FileSystem
 {
-	use ConfigTrait;
+
+	// these commands are dependant on the format used, so should belong in
+	// the adapter class
+
+	/**
+	 * Get the data from a file into an array
+	 * @return array Data from file, or empty array (! file_exists)
+	 */
+	public function getFileData($file) // getData
+	{
+		return ($this->fileExists($file)) ? include($file) : array();
+	}
+
+	/**
+	 * Write the data to file
+	 * @param string $file File to write e.g. "/path/to/lang/en/messages.php"
+	 * @param array $data Data to write
+	 * @return void
+	 */
+	public function writeDataToFile($file, $data) // putData
+	{
+		// ensure all folders exist
+		$dirPath = explode('/', $file);
+		array_pop($dirPath);
+		$dirPath = implode('/', $dirPath);
+		if (! is_dir($dirPath)) mkdir($dirPath, 0777, TRUE);
+
+		$data = '<'.'?php' . PHP_EOL .
+        PHP_EOL .
+        'return ' . var_export($data, true) . ';';
+
+		// will create a file if none exist
+		file_put_contents($file, $data);
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	use ConfigTrait; // probably don't need this, only Cattlog will use it
 
 	/**
 	 * @var array $srcFiles Cache of source files, retrieved on each execution
@@ -41,6 +107,20 @@ class FileSystem
 		$this->config = $config;
 	}
 
+
+
+
+
+
+
+
+
+
+
+
+
+	// cattlog class
+
 	/**
 	 * Get specifically source files
 	 * @return array Files
@@ -54,6 +134,41 @@ class FileSystem
 
 		return $this->srcFiles;
 	}
+
+	/**
+	 * Get the config array (may be altered from array that was given in instantiation)
+	 * In Zend, we're only gonna support a single file for now
+	 * @return array Config
+	 */
+	public function getDestFile($lang)
+	{
+		// set dest path by $lang e.g. /path/to/dest/{en}/
+		return str_replace("{lang}", $lang, $this->config['dest']);
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// file system for sure
 
 	/**
 	 * Get the content as a string
@@ -72,27 +187,6 @@ class FileSystem
 	{
 		return file_get_contents($file);
 	}
-
-	/**
-	 * Get the data from a file into an array
-	 * @return array Data from file, or empty array (! file_exists)
-	 */
-	public function getFileData($file)
-	{
-		return (file_exists($file)) ? include($file) : array();
-	}
-
-	/**
-	 * Get the config array (may be altered from array that was given in instantiation)
-	 * In Zend, we're only gonna support a single file for now
-	 * @return array Config
-	 */
-	public function getDestFile($lang)
-	{
-		// set dest path by $lang e.g. /path/to/dest/{en}/
-		return str_replace("{lang}", $lang, $this->config['dest']);
-	}
-
 
 	/**
 	 * Recursive scan to get files within a dir
@@ -141,27 +235,5 @@ class FileSystem
 		}
 
 		return $files;
-	}
-
-	/**
-	 * Write the data to file
-	 * @param string $file File to write e.g. "/path/to/lang/en/messages.php"
-	 * @param array $data Data to write
-	 * @return void
-	 */
-	public function writeDataToFile($file, $data)
-	{
-		// ensure all folders exist
-		$dirPath = explode('/', $file);
-		array_pop($dirPath);
-		$dirPath = implode('/', $dirPath);
-		if (! is_dir($dirPath)) mkdir($dirPath, 0777, TRUE);
-
-		$data = '<'.'?php' . PHP_EOL .
-        PHP_EOL .
-        'return ' . var_export($data, true) . ';';
-
-		// will create a file if none exist
-		file_put_contents($file, $data);
 	}
 }

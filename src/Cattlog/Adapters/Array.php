@@ -3,7 +3,7 @@
 use Cattlog\ConfigTrait;
 use Cattlog\FileSystem;
 
-class Php implements AdapterInterface
+class Array implements AdapterInterface
 {
 	use ConfigTrait;
 
