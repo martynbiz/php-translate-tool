@@ -1,23 +1,23 @@
 <?php
 
-use Cattlog\Adapters\Array;
+use Cattlog\Adapters\Php;
 use Cattlog\FileSystem;
 
 // require 'BaseAdapterTest.php';
 
-class ArrayTest extends BaseAdapterTest
+class PhpTest extends BaseAdapterTest
 {
     public function setUp()
     {
        parent::setUp();
 
        // instantiate the cattlog obj
-       $this->adapter = new Array($this->fsMock);
+       $this->adapter = new Php($this->fsMock);
     }
 
     public function testGetInstanceOfClass()
     {
-        $this->assertTrue($this->adapter instanceof Array);
+        $this->assertTrue($this->adapter instanceof Php);
     }
 
     public function testDiffKeys()
