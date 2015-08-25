@@ -3,7 +3,7 @@
 use Cattlog\ConfigTrait;
 use Cattlog\FileSystem;
 
-class CattlogZendAdapter implements AdapterInterface
+class Json implements AdapterInterface
 {
 	use ConfigTrait;
 

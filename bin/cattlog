@@ -3,7 +3,7 @@
 
 require realpath(__DIR__ . '/../../../autoload.php');
 
-use Cattlog\Adapters\CattlogZendAdapter as Cattlog;
+use Cattlog\Adapters\Php as Cattlog;
 use Cattlog\Output;
 use Cattlog\FileSystem;
 
