@@ -3,7 +3,8 @@
 
 require realpath(__DIR__ . '/../../../autoload.php');
 
-use Cattlog\Adapters\Php as Cattlog;
+use Cattlog\Cattlog;
+use Cattlog\Adapters\Json;
 use Cattlog\Output;
 use Cattlog\FileSystem;
 
@@ -20,8 +21,16 @@ try {
     if (file_exists(CONFIG_FILE) and is_null($config))
         throw new Exception('Config file data not set, or invalid JSON"');
 
-    $fileSystem = new FileSystem($config);
-    $cattlog = new Cattlog($fileSystem, $config);
+    // $fileSystem = new FileSystem($config);
+    // $cattlog = new Cattlog($fileSystem, $config);
+
+    // set the adapter from config
+    $adapterClass = '\\Cattlog\\Adapters\\' . ucfirst(strtolower($config['adapter']));
+    $adapter = new $adapterClass;
+
+    $fileSystem = new FileSystem();
+
+    $cattlog = new Cattlog($adapter, $fileSystem, $config);
 
     switch(@$argv[1]) {
         case 'init':
@@ -52,7 +61,7 @@ try {
                 throw new Exception('"' . $lang . '" is not in your valid_languages configuration.');
 
             // $keysFromDest = $cattlog->getKeysFromDestFiles($lang);
-            $data = $cattlog->getKeysWithValuesFromDestFiles($lang);
+            $data = $cattlog->getData($lang);
 
             $emptyKeys = array_filter($data, function ($value) {
                 return empty($value);
@@ -79,10 +88,7 @@ try {
             if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
                 throw new Exception('"' . $lang . '" is not in your valid_languages configuration.');
 
-            // don't filter files that don't exist, we want to show those too
-            $destFiles = $fileSystem->getDestFiles($lang);
-
-            $keysFromDest = $cattlog->getKeysFromDestFiles($lang);
+            $keysFromDest = $cattlog->getKeysFromDestFile($lang);
             $keysFromSrc = $cattlog->getKeysFromSrcFiles();
 
             $keysToAdd = $cattlog->getDiffAddedKeys($keysFromDest, $keysFromSrc);
@@ -102,7 +108,7 @@ try {
             if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
                 throw new Exception('"' . $lang . '" is not in your valid_languages configuration.');
 
-            $data = $cattlog->getKeysWithValuesFromDestFiles($lang);
+            $data = $cattlog->getData($lang);
 
             echo Output::success(count($data)) . PHP_EOL;
 
@@ -123,7 +129,7 @@ try {
                 throw new Exception('key pair missing - cattlog get_value <lang> <key>');
 
             // get the dest file
-            $destFile = $fileSystem->getDestFile($lang);
+            $destFile = $cattlog->getDestFile($lang);
 
             // attempt to get data from file
             if ($data = $fileSystem->getFileData($destFile)) {
@@ -198,10 +204,7 @@ try {
             if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
                 throw new Exception('"' . $lang . '" is not in your valid_languages configuration.');
 
-            // get the dest file
-            $destFile = $fileSystem->getDestFile($lang);
-
-            $keysFromDest = $cattlog->getKeysFromDestFiles($lang);
+            $keysFromDest = $cattlog->getKeysFromDestFile($lang);
             $keysFromSrc = $cattlog->getKeysFromSrcFiles();
 
             $keysToAdd = $cattlog->getDiffAddedKeys($keysFromDest, $keysFromSrc);
@@ -225,70 +228,22 @@ try {
                 echo PHP_EOL; // keep it tidy
             }
 
-
+            $data = $cattlog->getData($lang);
 
             // add keys
             if (count($keysToAdd)) {
-
-                echo 'Adding to files:' . PHP_EOL;
-
-                // loop through each key
-                // foreach ($keysToAdd as $key) {
-
-                    // get the dest file
-                    $destFile = $fileSystem->getDestFile($lang);
-
-                    // if ($destFile) {
-
-                        // if a physical file doesn't yet exist, then set as
-                        // an empty array. we'll create a new file
-                        $data = $fileSystem->getFileData($destFile);
-
-                        // add these keys to data
-                        $cattlog->add($data, $keysToAdd);
-
-                        // write to file
-                        $fileSystem->writeDataToFile($destFile, $data);
-
-                        echo '  ' . Output::success($destFile) . PHP_EOL;
-                    // } else {
-                    //     // key exists, but file not in config
-                    //     echo '  ' . Output::warning('No file matches key "' . $key . '"') . PHP_EOL;
-                    // }
-                // }
+                $cattlog->addKeys($data, $keysToAdd);
             }
-
 
             // remove keys
             if (count($keysToRemove)) {
-
-                echo 'Removing keys from files:' . PHP_EOL;
-
-                // loop through each key
-                // foreach ($keysToRemove as $key) {
-
-                    // get the dest file
-                    $destFile = $fileSystem->getDestFile($lang);
-
-                    // if ($destFile) {
-
-                        // if a physical file doesn't yet exist, then set as
-                        // an empty array. we'll create a new file
-                        $data = $fileSystem->getFileData($destFile);
-
-                        // remove these keys from data
-                        $cattlog->remove($data, $keysToRemove);
-
-                        // write to file
-                        $fileSystem->writeDataToFile($destFile, $data);
-
-                        echo '  ' . Output::success($destFile) . PHP_EOL;
-                    // } else {
-                    //     // key exists, but file not in config
-                    //     echo '  ' . Output::warning('No file matches key "' . $key . '"') . PHP_EOL;
-                    // }
-                // }
+                $cattlog->removeKeys($data, $keysToRemove);
             }
+
+            // data written to file
+            $file = $cattlog->getDestFile($lang);
+            $cattlog->putData($lang, $data);
+            echo Output::success('Updated file: ' . $file) . PHP_EOL;
 
             break;
 
