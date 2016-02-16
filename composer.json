@@ -23,6 +23,6 @@
         "phpunit/phpunit": "4.3.*"
     },
     "bin": [
-        "bin/cattlog"
+        "bin/translatetool"
     ]
 }
