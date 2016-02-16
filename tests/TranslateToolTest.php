@@ -1,14 +1,9 @@
 <?php
 
-use Cattlog\Cattlog;
+use MartynBiz\Translate\Tool\TranslateTool;
 
-class CattlogTest extends PHPUnit_Framework_TestCase
+class TranslateToolTest extends PHPUnit_Framework_TestCase
 {
-    /**
-     * @var Cattlog $cattlog Object we'll be testing
-     */
-     protected $cattlog;
-
     /**
      * @var Adapter_mock $fs
      */
@@ -22,25 +17,27 @@ class CattlogTest extends PHPUnit_Framework_TestCase
     public function setUp()
     {
         // mock adapter
-        $this->adapterMock = $this->getMockBuilder('Cattlog\Adapters\AdapterInterface')
+        $this->adapterMock = $this->getMockBuilder('MartynBiz\\Translate\\Tool\\Adapter\\AdapterInterface')
             ->disableOriginalConstructor()
             ->getMock();
 
         // mock file system
-        $this->fsMock = $this->getMockBuilder('Cattlog\FileSystem')
+        $this->fsMock = $this->getMockBuilder('MartynBiz\\Translate\\Tool\\FileSystem')
             ->disableOriginalConstructor()
             ->getMock();
-
-        $this->cattlog = new Cattlog($this->adapterMock, $this->fsMock);
     }
 
     public function testGetInstanceOfClass()
     {
-        $this->assertTrue($this->cattlog instanceof Cattlog);
+        $tool = new TranslateTool($this->adapterMock, $this->fsMock);
+
+        $this->assertTrue($tool instanceof TranslateTool);
     }
 
     public function testDiffKeys()
     {
+        $tool = new TranslateTool($this->adapterMock, $this->fsMock);
+
         // test data
         $old = array(
             'REMOVED_2',
@@ -61,7 +58,7 @@ class CattlogTest extends PHPUnit_Framework_TestCase
         );
 
         // assert added
-        $added = $this->cattlog->getDiffAddedKeys($old, $new);
+        $added = $tool->getDiffAddedKeys($old, $new);
         sort($added);
         $this->assertEquals(array(
             'NEW_1',
@@ -70,7 +67,7 @@ class CattlogTest extends PHPUnit_Framework_TestCase
         ), $added);
 
         // assert removed
-        $added = $this->cattlog->getDiffRemovedKeys($old, $new);
+        $added = $tool->getDiffRemovedKeys($old, $new);
         sort($added);
         $this->assertEquals(array(
             'REMOVED_1',
@@ -80,6 +77,8 @@ class CattlogTest extends PHPUnit_Framework_TestCase
 
     public function testAddKeys()
     {
+        $tool = new TranslateTool($this->adapterMock, $this->fsMock);
+
         $actual = array(
             'TEST_1' => 'test 1',
             'TEST_2' => 'test 2',
@@ -100,13 +99,15 @@ class CattlogTest extends PHPUnit_Framework_TestCase
             'TEST_7' => 'TEST_7',
         );
 
-        $this->cattlog->addKeys($actual, $keysToAdd);
+        $tool->addKeys($actual, $keysToAdd);
 
         $this->assertEquals($expected, $actual);
     }
 
     public function testRemoveKeys()
     {
+        $tool = new TranslateTool($this->adapterMock, $this->fsMock);
+
         $actual = array(
             'TEST_1' => 'test 1',
             'TEST_2' => 'test 2',
@@ -128,13 +129,15 @@ class CattlogTest extends PHPUnit_Framework_TestCase
             'TEST_6' => 'test 6',
         );
 
-        $this->cattlog->removeKeys($actual, $keysToRemove);
+        $tool->removeKeys($actual, $keysToRemove);
 
         $this->assertEquals($expected, $actual);
     }
 
     public function testGetValue()
     {
+        $tool = new TranslateTool($this->adapterMock, $this->fsMock);
+
         $data = array(
             'TEST_1' => 'test 1',
             'TEST_2' => 'test 2',
@@ -143,13 +146,15 @@ class CattlogTest extends PHPUnit_Framework_TestCase
             'TEST_5' => 'test 5',
         );
 
-        $this->assertEquals($this->cattlog->getValue($data, 'TEST_1'), 'test 1');
-        $this->assertEquals($this->cattlog->getValue($data, 'TEST_2'), 'test 2');
-        $this->assertEquals($this->cattlog->getValue($data, 'TEST_XX'), null);
+        $this->assertEquals($tool->getValue($data, 'TEST_1'), 'test 1');
+        $this->assertEquals($tool->getValue($data, 'TEST_2'), 'test 2');
+        $this->assertEquals($tool->getValue($data, 'TEST_XX'), null);
     }
 
     public function testSetValue()
     {
+        $tool = new TranslateTool($this->adapterMock, $this->fsMock);
+
         $actual = array(
             'TEST_1' => 'test 1',
             'TEST_2' => 'test 2',
@@ -167,15 +172,17 @@ class CattlogTest extends PHPUnit_Framework_TestCase
             'TEST_5' => 'test 5',
         );
 
-        $this->cattlog->setValue($actual, 'TEST_1', 'new 1');
-        $this->cattlog->setValue($actual, 'TEST_2', 'new 2');
-        $this->cattlog->setValue($actual, 'TEST_3', 'new 3');
+        $tool->setValue($actual, 'TEST_1', 'new 1');
+        $tool->setValue($actual, 'TEST_2', 'new 2');
+        $tool->setValue($actual, 'TEST_3', 'new 3');
 
         $this->assertEquals($expected, $actual);
     }
 
     public function testHasKey()
     {
+        $tool = new TranslateTool($this->adapterMock, $this->fsMock);
+
         $data = array(
             'TEST_1' => 'test 1',
             'TEST_2' => 'test 2',
@@ -184,13 +191,15 @@ class CattlogTest extends PHPUnit_Framework_TestCase
             'TEST_5' => 'test 5',
         );
 
-        $this->assertTrue( $this->cattlog->hasKey($data, 'TEST_1') );
-        $this->assertFalse( $this->cattlog->hasKey($data, 'TEST_10') );
-        $this->assertFalse( $this->cattlog->hasKey($data, 'test 1') ); //
+        $this->assertTrue( $tool->hasKey($data, 'TEST_1') );
+        $this->assertFalse( $tool->hasKey($data, 'TEST_10') );
+        $this->assertFalse( $tool->hasKey($data, 'test 1') ); //
     }
 
     public function testSetValueWithCreateFalseOption()
     {
+        $tool = new TranslateTool($this->adapterMock, $this->fsMock);
+
         $actual = array(
             'TEST_1' => 'test 1',
             'TEST_2' => 'test 2',
@@ -212,15 +221,17 @@ class CattlogTest extends PHPUnit_Framework_TestCase
             'create' => false,
         );
 
-        $this->cattlog->setValue($actual, 'TEST_1', 'new 1', $options);
-        $this->cattlog->setValue($actual, 'TEST_6', 'new 6', $options); // no set
+        $tool->setValue($actual, 'TEST_1', 'new 1', $options);
+        $tool->setValue($actual, 'TEST_6', 'new 6', $options); // no set
 
         $this->assertEquals($expected, $actual);
     }
 
     public function testGetDestFile()
     {
-        $this->cattlog->setConfig(array(
+        $tool = new TranslateTool($this->adapterMock, $this->fsMock);
+
+        $tool->setConfig(array(
             'dest' => 'resources/lang/{lang}/messages.php',
             'project_dir' => '/var/www/myproject/',
         ));
@@ -230,14 +241,16 @@ class CattlogTest extends PHPUnit_Framework_TestCase
         // also checks that project_dir right slash is trimmed :)
         $expected = '/var/www/myproject/resources/lang/en/messages.php';
 
-        $actual = $this->cattlog->getDestFile($lang);
+        $actual = $tool->getDestFile($lang);
 
         $this->assertEquals($expected, $actual);
     }
 
     public function testGetDestFilesWhenDestIsString()
     {
-        $this->cattlog->setConfig(array(
+        $tool = new TranslateTool($this->adapterMock, $this->fsMock);
+
+        $tool->setConfig(array(
             'dest' => 'resources/lang/{lang}/messages.php',
             'project_dir' => '/var/www/myproject/',
         ));
@@ -247,14 +260,16 @@ class CattlogTest extends PHPUnit_Framework_TestCase
         // also checks that project_dir right slash is trimmed :)
         $expected = '/var/www/myproject/resources/lang/en/messages.php';
 
-        $actual = $this->cattlog->getDestFile($lang);
+        $actual = $tool->getDestFile($lang);
 
         $this->assertEquals($expected, $actual);
     }
 
     public function testGetDataTest()
     {
-        $this->cattlog->setConfig(array(
+        $tool = new TranslateTool($this->adapterMock, $this->fsMock);
+
+        $tool->setConfig(array(
             'dest' => 'resources/lang/{lang}/messages.php',
             'project_dir' => '/var/www/myproject/',
         ));
@@ -264,22 +279,24 @@ class CattlogTest extends PHPUnit_Framework_TestCase
         );
 
         $lang = 'en';
-        $file = $this->cattlog->getDestFile($lang);
+        $file = $tool->getDestFile($lang);
 
         $this->adapterMock
-            ->expects($this->once())
+            ->expects( $this->once() )
             ->method('getData')
             ->with($file)
             ->willReturn($expected);
 
-        $actual = $this->cattlog->getData($lang);
+        $actual = $tool->getData($lang);
 
         $this->assertEquals($expected, $actual);
     }
 
     public function testPutDataTest()
     {
-        $this->cattlog->setConfig(array(
+        $tool = new TranslateTool($this->adapterMock, $this->fsMock);
+
+        $tool->setConfig(array(
             'dest' => 'resources/lang/{lang}/messages.php',
             'project_dir' => '/var/www/myproject/',
         ));
@@ -289,13 +306,13 @@ class CattlogTest extends PHPUnit_Framework_TestCase
         );
 
         $lang = 'en';
-        $file = $this->cattlog->getDestFile($lang);
+        $file = $tool->getDestFile($lang);
 
         $this->adapterMock
             ->expects($this->once())
             ->method('putData')
             ->with($file, $data);
 
-        $actual = $this->cattlog->putData('en', $data);
+        $actual = $tool->putData('en', $data);
     }
 }

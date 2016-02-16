@@ -1,12 +1,10 @@
-<?php namespace Cattlog;
+<?php
+namespace MartynBiz\Translate\Tool;
 
 /**
  * A simple class that let's us color text in the output, and
  * crop
  */
-
-//https://github.com/lijinma/php-cli-color
-
 class Output
 {
 	const BLACK = "\033[0;30m";

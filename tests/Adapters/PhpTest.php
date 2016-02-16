@@ -1,9 +1,7 @@
 <?php
 
-use Cattlog\Adapters\Php;
-use Cattlog\FileSystem;
-
-// require 'BaseAdapterTest.php';
+use MartynBiz\Translate\Tool\Adapter\Php;
+use MartynBiz\Translate\Tool\FileSystem;
 
 class PhpTest extends BaseAdapterTest
 {

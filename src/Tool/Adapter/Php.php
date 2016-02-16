@@ -1,6 +1,7 @@
-<?php namespace Cattlog\Adapters;
+<?php
+namespace MartynBiz\Translate\Tool\Adapter;
 
-class Json implements AdapterInterface
+class Php implements AdapterInterface
 {
 	/**
 	 * Get the data from a file into an array
@@ -8,7 +9,7 @@ class Json implements AdapterInterface
 	 */
 	public function getData($file) // getData
 	{
-		return (file_exists($file)) ? json_decode(file_get_contents($file), true) : array();
+		return (file_exists($file)) ? include($file) : array();
 	}
 
 	/**

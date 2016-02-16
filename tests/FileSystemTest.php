@@ -1,6 +1,6 @@
 <?php
 
-use Cattlog\FileSystem;
+use MartynBiz\Translate\Tool\FileSystem;
 
 class FileSystemTest extends PHPUnit_Framework_TestCase
 {

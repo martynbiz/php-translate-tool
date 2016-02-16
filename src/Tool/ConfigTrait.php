@@ -1,4 +1,4 @@
-<?php namespace Cattlog;
+<?php namespace MartynBiz\Translate\Tool;
 
 /**
  * Accessor methods for config

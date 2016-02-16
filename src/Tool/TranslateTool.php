@@ -1,4 +1,7 @@
-<?php namespace Cattlog;
+<?php
+namespace MartynBiz\Translate\Tool;
+
+use MartynBiz\Translate\Tool\Adapter\AdapterInterface;
 
 /**
  * This is the interface for the CLI script to use. Ideally everything should go
@@ -6,10 +9,7 @@
  * Still trying to figure the ideal structure for this
  * If possible, only here should deal with config (so maybe remove config trait)
  */
-
-use Cattlog\Adapters\AdapterInterface;
-
-class Cattlog
+class TranslateTool
 {
 	use ConfigTrait;
 

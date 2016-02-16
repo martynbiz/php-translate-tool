@@ -3,34 +3,41 @@
 
 require realpath(__DIR__ . '/../../../autoload.php');
 
-use Cattlog\Cattlog;
-use Cattlog\Adapters\Json;
-use Cattlog\Output;
-use Cattlog\FileSystem;
+use MartynBiz\Translate\Tool\TranslateTool;
+use MartynBiz\Translate\Tool\Adapter; // path to namespace
+use MartynBiz\Translate\Tool\Output;
+use MartynBiz\Translate\Tool\FileSystem;
 
 define('PROJECT_DIR', getcwd());
 define('TEMPLATE_DIR', realpath(__DIR__ . '/../files/templates/'));
-define('CONFIG_FILE', PROJECT_DIR . '/cattlog.json');
+define('CONFIG_FILE', PROJECT_DIR . '/translatetool.json');
 
 // get config if exists
 $config = file_exists(CONFIG_FILE) ? json_decode(file_get_contents(CONFIG_FILE), true) : array();
 
 try {
 
-    // ensure json isn't NULL, perhaps syntax error
-    if (file_exists(CONFIG_FILE) and is_null($config))
-        throw new Exception('Config file data not set, or invalid JSON"');
+    switch(@$argv[1]) {
+        case 'init':
+        case null: // no command passed, show help
 
-    // $fileSystem = new FileSystem($config);
-    // $cattlog = new Cattlog($fileSystem, $config);
+            break;
 
-    // set the adapter from config
-    $adapterClass = '\\Cattlog\\Adapters\\' . ucfirst(strtolower($config['adapter']));
-    $adapter = new $adapterClass;
+        default:
 
-    $fileSystem = new FileSystem();
+            // ensure json isn't NULL, perhaps syntax error
+            if (!file_exists(CONFIG_FILE) or is_null($config))
+                throw new Exception('Config file data not set, or invalid JSON"');
 
-    $cattlog = new Cattlog($adapter, $fileSystem, $config);
+            // set the adapter from config
+            $adapterClass = 'Adapter\\' . ucfirst(strtolower($config['adapter']));
+            $adapter = new $adapterClass;
+
+            $fileSystem = new FileSystem();
+
+            $tool = new TranslateTool($adapter, $fileSystem, $config);
+
+    }
 
     switch(@$argv[1]) {
         case 'init':
@@ -60,8 +67,8 @@ try {
             if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
                 throw new Exception('"' . $lang . '" is not in your valid_languages configuration.');
 
-            // $keysFromDest = $cattlog->getKeysFromDestFiles($lang);
-            $data = $cattlog->getData($lang);
+            // $keysFromDest = $tool->getKeysFromDestFiles($lang);
+            $data = $tool->getData($lang);
 
             $emptyKeys = array_filter($data, function ($value) {
                 return empty($value);
@@ -88,11 +95,11 @@ try {
             if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
                 throw new Exception('"' . $lang . '" is not in your valid_languages configuration.');
 
-            $keysFromDest = $cattlog->getKeysFromDestFile($lang);
-            $keysFromSrc = $cattlog->getKeysFromSrcFiles();
+            $keysFromDest = $tool->getKeysFromDestFile($lang);
+            $keysFromSrc = $tool->getKeysFromSrcFiles();
 
-            $keysToAdd = $cattlog->getDiffAddedKeys($keysFromDest, $keysFromSrc);
-            $keysToRemove = $cattlog->getDiffRemovedKeys($keysFromDest, $keysFromSrc);
+            $keysToAdd = $tool->getDiffAddedKeys($keysFromDest, $keysFromSrc);
+            $keysToRemove = $tool->getDiffRemovedKeys($keysFromDest, $keysFromSrc);
 
             require TEMPLATE_DIR . '/scan.php';
 
@@ -108,7 +115,7 @@ try {
             if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
                 throw new Exception('"' . $lang . '" is not in your valid_languages configuration.');
 
-            $data = $cattlog->getData($lang);
+            $data = $tool->getData($lang);
 
             echo Output::success(count($data)) . PHP_EOL;
 
@@ -129,13 +136,13 @@ try {
                 throw new Exception('key pair missing - cattlog get_value <lang> <key>');
 
             // get the dest file
-            $destFile = $cattlog->getDestFile($lang);
+            $destFile = $tool->getDestFile($lang);
 
             // attempt to get data from file
             if ($data = $fileSystem->getFileData($destFile)) {
 
-                if ($cattlog->hasKey($data, $key)) {
-                    $value = $cattlog->getValue($data, $key);
+                if ($tool->hasKey($data, $key)) {
+                    $value = $tool->getValue($data, $key);
                     echo Output::success(json_encode($value)) . PHP_EOL;
                 } else {
                     throw new Exception('Could not find key "' . $key . '"');
@@ -172,8 +179,8 @@ try {
             // attempt to get data from file
             if ($data = $fileSystem->getFileData($destFile)) {
 
-                if ($cattlog->hasKey($data, $key)) {
-                    $cattlog->setValue($data, $key, $newValue, array(
+                if ($tool->hasKey($data, $key)) {
+                    $tool->setValue($data, $key, $newValue, array(
                         'create' => false, // don't create a new key, if none exists
                         'overwrite' => true,
                     ));
@@ -204,11 +211,11 @@ try {
             if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
                 throw new Exception('"' . $lang . '" is not in your valid_languages configuration.');
 
-            $keysFromDest = $cattlog->getKeysFromDestFile($lang);
-            $keysFromSrc = $cattlog->getKeysFromSrcFiles();
+            $keysFromDest = $tool->getKeysFromDestFile($lang);
+            $keysFromSrc = $tool->getKeysFromSrcFiles();
 
-            $keysToAdd = $cattlog->getDiffAddedKeys($keysFromDest, $keysFromSrc);
-            $keysToRemove = $cattlog->getDiffRemovedKeys($keysFromDest, $keysFromSrc);
+            $keysToAdd = $tool->getDiffAddedKeys($keysFromDest, $keysFromSrc);
+            $keysToRemove = $tool->getDiffRemovedKeys($keysFromDest, $keysFromSrc);
 
             require TEMPLATE_DIR . '/scan.php';
 
@@ -228,21 +235,21 @@ try {
                 echo PHP_EOL; // keep it tidy
             }
 
-            $data = $cattlog->getData($lang);
+            $data = $tool->getData($lang);
 
             // add keys
             if (count($keysToAdd)) {
-                $cattlog->addKeys($data, $keysToAdd);
+                $tool->addKeys($data, $keysToAdd);
             }
 
             // remove keys
             if (count($keysToRemove)) {
-                $cattlog->removeKeys($data, $keysToRemove);
+                $tool->removeKeys($data, $keysToRemove);
             }
 
             // data written to file
-            $file = $cattlog->getDestFile($lang);
-            $cattlog->putData($lang, $data);
+            $file = $tool->getDestFile($lang);
+            $tool->putData($lang, $data);
             echo Output::success('Updated file: ' . $file) . PHP_EOL;
 
             break;

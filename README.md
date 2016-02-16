@@ -2,17 +2,17 @@
 
 ## Introduction ##
 
-A CLI tool for Laravel 5 to manage translation files and syncing entries with view files. Allows translations to be synced with views, get/set values, and list empty values.
+A CLI tool for Zend Framework to manage translation files and syncing entries with view files. Allows translations to be synced with views, get/set values, and list empty values.
 
 ## Installation ##
 
 Install with composer
 
-    composer require martynbiz/cattlog-l5
+    composer require martynbiz/php-translate-manager
 
 ## Usage ##
 
-### Initialize config ###
+### Create config ###
 
 Cattlog requires a cattlog.json config file at the root of the project to know where to scan source, save to file, filter to use etc:
 
@@ -28,6 +28,13 @@ This will create the following file (/path/to/project/cattlog.json):
     "valid_languages": [...]
 }
 ```
+
+### Scan keys ###
+
+This will just check and tell you what keys are new, and what will be removed. However
+it doesn't make any changes and is useful to do a dry run or test configuration.
+
+    ./vendor/bin/cattlog update en
 
 ### Update keys ###
 
