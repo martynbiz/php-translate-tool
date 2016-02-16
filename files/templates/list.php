@@ -1,6 +1,6 @@
 <?php
 
-use Cattlog\Output;
+use MartynBiz\Translate\Tool\Output;
 
 ?>
 <?php foreach ($emptyKeys as $key => $value): ?>

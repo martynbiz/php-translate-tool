@@ -1,4 +1,4 @@
-Cattlog by Martyn Bissett.
+Translate Tool by Martyn Bissett.
 
 Usage: cattlog [command] [args...] [options]
 

@@ -30,7 +30,7 @@ try {
                 throw new Exception('Config file data not set, or invalid JSON"');
 
             // set the adapter from config
-            $adapterClass = 'Adapter\\' . ucfirst(strtolower($config['adapter']));
+            $adapterClass = 'MartynBiz\\Translate\\Tool\\Adapter\\' . ucfirst(strtolower($config['adapter']));
             $adapter = new $adapterClass;
 
             $fileSystem = new FileSystem();
@@ -43,13 +43,13 @@ try {
         case 'init':
 
             // copy a default file from the repo to the PROJECT_DIR
-            $srcFile = realpath(__DIR__ . '/../files/cattlog.json');
+            $srcFile = realpath(__DIR__ . '/../files/translatetool.json');
 
             if (file_exists(CONFIG_FILE)) {
-                echo Output::warning('File ./cattlog.json already exists.') . PHP_EOL;
+                echo Output::warning('File ./translatetool.json already exists.') . PHP_EOL;
             } else {
                 copy($srcFile, CONFIG_FILE);
-                echo Output::success('Created ./cattlog.json config file.') . PHP_EOL;
+                echo Output::success('Created ./translatetool.json config file.') . PHP_EOL;
             }
             break;
 
@@ -57,11 +57,11 @@ try {
 
             // check config file is not missing
             if (!file_exists(CONFIG_FILE))
-                throw new Exception('Config file missing - run "cattlog init"');
+                throw new Exception('Config file missing - run "translatetool init"');
 
             // get $lang from paramaters
             if (! $lang = @$argv[2])
-                throw new Exception('Language parameter missing - cattlog list <lang>');
+                throw new Exception('Language parameter missing - translatetool list <lang>');
 
             // get $lang from paramaters
             if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
@@ -85,11 +85,11 @@ try {
 
             // check config file is not missing
             if (!file_exists(CONFIG_FILE))
-                throw new Exception('Config file missing - run "cattlog init"');
+                throw new Exception('Config file missing - run "translatetool init"');
 
             // get language parameter
             if (! $lang = @$argv[2])
-                throw new Exception('Language parameter missing - cattlog scan <lang>');
+                throw new Exception('Language parameter missing - translatetool scan <lang>');
 
             // get $lang from paramaters
             if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
@@ -109,7 +109,7 @@ try {
 
             // get $lang from paramaters
             if (! $lang = @$argv[2])
-                throw new Exception('Language parameter missing - cattlog count <lang>');
+                throw new Exception('Language parameter missing - translatetool count <lang>');
 
             // get $lang from paramaters
             if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
@@ -125,7 +125,7 @@ try {
 
             // get $lang from paramaters
             if (! $lang = @$argv[2])
-                throw new Exception('Language parameter missing - cattlog get_value <lang> <key>');
+                throw new Exception('Language parameter missing - translatetool get_value <lang> <key>');
 
             // get $lang from paramaters
             if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
@@ -133,7 +133,7 @@ try {
 
             // get $key from paramaters
             if (! $key = @$argv[3])
-                throw new Exception('key pair missing - cattlog get_value <lang> <key>');
+                throw new Exception('key pair missing - translatetool get_value <lang> <key>');
 
             // get the dest file
             $destFile = $tool->getDestFile($lang);
@@ -158,7 +158,7 @@ try {
 
             // get $lang from paramaters
             if (! $lang = @$argv[2])
-                throw new Exception('Language parameter missing - cattlog get_value <lang> <key>="<value>"');
+                throw new Exception('Language parameter missing - translatetool get_value <lang> <key>="<value>"');
 
             // get $lang from paramaters
             if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))
@@ -166,9 +166,9 @@ try {
 
             // we need the key=value
             if (! isset($argv[3]))
-                throw new Exception('key/value pair missing - cattlog get_value <lang> <key>="<value>"');
+                throw new Exception('key/value pair missing - translatetool get_value <lang> <key>="<value>"');
             elseif (! preg_match('/(.*)=(.*)/', $argv[3], $pairSplit))
-                throw new Exception('key/value pair incorrect format - cattlog get_value <lang> <key>="<value>"');
+                throw new Exception('key/value pair incorrect format - translatetool get_value <lang> <key>="<value>"');
 
             $key = $pairSplit[1];
             $newValue = $pairSplit[2];
@@ -205,7 +205,7 @@ try {
 
             // get $lang from paramaters
             if (! $lang = @$argv[2])
-                throw new Exception('Language parameter missing - cattlog update <lang>');
+                throw new Exception('Language parameter missing - translatetool update <lang>');
 
             // get $lang from paramaters
             if (isset($config['valid_languages']) and !in_array($lang, $config['valid_languages']))

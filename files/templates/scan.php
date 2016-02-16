@@ -1,6 +1,6 @@
 <?php
 
-use Cattlog\Output;
+use MartynBiz\Translate\Tool\Output;
 
 ?>
 The following new keys were found:
