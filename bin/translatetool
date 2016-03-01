@@ -17,7 +17,10 @@ $config = file_exists(CONFIG_FILE) ? json_decode(file_get_contents(CONFIG_FILE),
 
 try {
 
-    switch(@$argv[1]) {
+    $command = @$argv[1];
+
+    // this switch is to ensure that commands that require config, config is set
+    switch($command) {
         case 'init':
         case null: // no command passed, show help
 
@@ -39,7 +42,7 @@ try {
 
     }
 
-    switch(@$argv[1]) {
+    switch($command) {
         case 'init':
 
             // copy a default file from the repo to the PROJECT_DIR
@@ -251,6 +254,118 @@ try {
             $file = $tool->getDestFile($lang);
             $tool->putData($lang, $data);
             echo Output::success('Updated file: ' . $file) . PHP_EOL;
+
+            break;
+
+        case 'php2csv':
+        case 'csv2php':
+        // try - https://github.com/raulferras/PHP-po-parser
+
+            list($srcType, $destType) = explode('2', $command);
+
+            // depending on the covnersion, this file may be src or dest
+            $csvFile = $argv[2];
+
+            // extract the data from the source file
+            // should create a name/value array, nested in a lang e.g. {{key1: {en: value, ja: value}, key2:...}
+            switch($srcType) {
+                case 'php':
+
+                    $allData = array();
+                    foreach($config['languages'] as $lang) {
+                        $data = $tool->getData($lang);
+                        foreach($data as $key => $value) {
+                            $allData[$key][$lang] = $value;
+                        }
+                    }
+
+                    break;
+                case 'csv':
+
+                    $allData = array();
+                    $raw = file_get_contents($csvFile);
+                    $rows = explode(PHP_EOL, $raw);
+                    $langRowData = explode(',', (array_shift($rows)));
+
+                    // now put the keys and values into array
+                    foreach ($rows as $row) {
+                        $rowData = explode(',', $row);
+                        $key = $rowData[0];
+
+                        foreach ($langRowData as $i => $lang) {
+
+                            // if first element (key), continue
+                            if ($i===0) continue;
+
+                            // only valid langs allowed
+                            if (!in_array($lang, $config['languages'])) continue;
+
+                            // if empty string, continue
+                            if (empty($rowData[$i])) continue;
+
+                            $allData[$key][$lang] = $rowData[$i];
+                        }
+                    }
+
+                    break;
+            }
+
+            // write the data to dest file
+            switch($destType) {
+                case 'csv':
+
+                    // open the csv file for writing
+                    $fp = fopen($csvFile, 'w');
+
+                    // this will be the language row, but we'll building it up
+                    // merge the lang row from the keys, new ones will be incorporated
+                    $langRowData = array();
+                    foreach ($allData as $key => $translations) {
+                        $langRowData = array_replace($langRowData, array_keys($translations));
+                    }
+                    array_unshift($langRowData, '');
+
+                    // save the column headers
+                    fputcsv($fp, $langRowData);
+
+                    // now the translations
+                    foreach ($allData as $key => $translations) {
+                        foreach ($translations as $lang => $value) {
+
+                            // array with key as first column
+                            $rowToWrite = array_values($translations);
+                            array_unshift($rowToWrite, $key);
+                        }
+
+                        // write to csv
+                        fputcsv($fp, $rowToWrite);
+                    }
+
+                    // close
+                    fclose($fp);
+                    echo Output::success('Updated file: ' . $csvFile) . PHP_EOL;
+
+                    break;
+                case 'php':
+
+                    // put translations back in files
+                    // first, convert to a move convenient array {en: {key1: value1, key2: value2}, ja:...}
+                    $dataToWrite = array();
+                    foreach($allData as $key => $translations) {
+                        foreach($translations as $lang => $value) {
+                            $dataToWrite[$lang][$key] = $value;
+                        }
+                    }
+
+                    // write each to file
+                    foreach($dataToWrite as $lang => $data) {
+                        $file = $tool->getDestFile($lang);
+                        $tool->putData($lang, $data);
+                        echo Output::success('Updated file: ' . $file) . PHP_EOL;
+                    }
+
+                    break;
+            }
 
             break;
 
