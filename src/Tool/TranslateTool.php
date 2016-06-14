@@ -69,7 +69,7 @@ class TranslateTool
 
 		// set each value with the value of the key, easier to spot when missing
 		array_walk($keys, function(&$value, $key) {
-			$value = $key;
+			$value = '';
 		});
 
 		// $data will overwrite $keys so previous values not overwritten
